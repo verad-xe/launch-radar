@@ -209,7 +209,7 @@
       'The board is the watchlist\u2019s own exclusion rule with its $50M TVL floor removed — wrapped, staked and bridged ' +
       'pass-throughs, exchange products and single-version pools stay out — which ranks ' + R.board_size +
       ' protocols and covers all ' + R.watchlist_size + ' watchlist names. One function prices every row; no name is special-cased.'));
-    var f = el('p', 'formula', 'implied value  =  TVL  \u00d7  peer multiple (category)  \u00d7  momentum factor  \u00d7  maturity factor');
+    var f = el('p', 'formula', 'implied value  =  TVL  \u00d7  peer multiple (category)  \u00d7  momentum factor  \u00d7  maturity factor  \u00d7  reach factor');
     box.appendChild(f);
 
     box.appendChild(el('h3', null, 'Peer multiple — what the market pays per TVL dollar'));
@@ -231,6 +231,13 @@
       'Days from the protocol\u2019s listing date to the snapshot date, mapped linearly from ' + m.maturity_base + ' to ' +
       (m.maturity_base + m.maturity_span).toFixed(2) + ' over ' + m.maturity_days + ' days. A long tokenless track record is evidence ' +
       'of a real, durable protocol whose launch is still ahead of it. An unknown listing date counts as ' + m.unknown_age_days + ' days.'));
+
+    box.appendChild(el('h3', null, 'Reach factor — how many chains it is live on'));
+    box.appendChild(el('p', null,
+      'The number of chains in the protocol\u2019s own record: factor = 1 + ' + m.reach_per_chain + ' \u00d7 extra chains, counting at most ' +
+      m.reach_max_extra_chains + ' extra, so a single-chain protocol scores \u00d71.00 and one live on eleven or more chains scores \u00d7' +
+      (1 + m.reach_per_chain * m.reach_max_extra_chains).toFixed(2) + '. Every extra chain is another surface a farmer can qualify on ' +
+      'and another community a launch would be distributed into, so breadth earns a bounded premium rather than none.'));
 
     box.appendChild(el('h3', null, 'Farm plans'));
     box.appendChild(el('p', 'note',
@@ -281,10 +288,12 @@
     factRow(facts, 'Momentum \u00d7 — 7d TVL change ' + fmtPct(r.change_7d), '\u00d7 ' + r.momentum_factor.toFixed(4));
     factRow(facts, 'Maturity \u00d7 — ' + (r.age_days === null ? 'listing date unknown' : r.age_days + ' days without a token') +
       (r.listed_at ? ' (listed ' + r.listed_at + ')' : ''), '\u00d7 ' + r.maturity_factor.toFixed(4));
+    factRow(facts, 'Reach \u00d7 — live on ' + r.chains.length + (r.chains.length === 1 ? ' chain' : ' chains') +
+      (r.chains.length > 0 ? ' (' + r.chains.slice(0, 4).join(', ') + (r.chains.length > 4 ? ', \u2026' : '') + ')' : ''), '\u00d7 ' + r.reach_factor.toFixed(4));
     factRow(facts, 'Implied value', fmtFull(r.implied_value_usd), true);
     why.appendChild(facts);
     why.appendChild(el('p', 'factor-note',
-      'The same three factors price every row on the board; only the protocol\u2019s own figures change.'));
+      'The same four factors price every row on the board; only the protocol\u2019s own figures change.'));
     grid.appendChild(why);
 
     var plan = el('div', 'card');

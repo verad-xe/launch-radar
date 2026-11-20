@@ -7,7 +7,7 @@
 //
 // Implied value is priced from the snapshot's own figures, the same function for every row:
 //
-//   implied = tvl_usd x peer_multiple(category) x momentum_factor x maturity_factor
+//   implied = tvl_usd x peer_multiple(category) x momentum_factor x maturity_factor x reach_factor
 //
 // - peer_multiple: the median market-cap-to-TVL ratio of the snapshot's already-tokened protocols
 //   in the same category — what the market itself pays per dollar of TVL for that kind of
@@ -19,6 +19,10 @@
 // - maturity_factor: the days the protocol has run with no token, listed_at to the snapshot's
 //   as_of, mapped linearly from MATURITY_BASE to MATURITY_BASE + MATURITY_SPAN over four years.
 //   A long tokenless track record is evidence of a real protocol with its launch still ahead.
+// - reach_factor: the number of chains the protocol is live on, 1 + REACH_PER_CHAIN for each
+//   chain past the first, capped at REACH_MAX_EXTRA_CHAINS extra chains (x1.00 on one chain,
+//   x1.20 on eleven or more). Every extra chain is another surface a farmer can qualify on and
+//   another community a launch would be distributed into, so breadth is worth a bounded premium.
 //
 // Farm plans are generated per protocol from its own record: the category picks the core action,
 // the first chain picks where gas is paid, the TVL tier sizes the capital, and the age sets the
@@ -59,6 +63,8 @@ export interface ModelConstants {
   maturity_span: number;
   maturity_days: number;
   unknown_age_days: number;
+  reach_per_chain: number;
+  reach_max_extra_chains: number;
 }
 
 export const MODEL: ModelConstants = {
@@ -72,10 +78,12 @@ export const MODEL: ModelConstants = {
   maturity_span: 0.45,
   maturity_days: 1460,
   unknown_age_days: 365,
+  reach_per_chain: 0.02,
+  reach_max_extra_chains: 10,
 };
 
 /** The model's version label: the dashboard names it and the README quotes it. */
-export const MODEL_VERSION = 'peer-multiple-1';
+export const MODEL_VERSION = 'peer-multiple-2';
 
 /** How many live-token protocols the dashboard's already-trading reference carries, by market cap. */
 export const LIVE_ROWS = 24;
@@ -103,6 +111,7 @@ export interface BoardRow {
     category_median: number | null;
     momentum_factor: number;
     maturity_factor: number;
+    reach_factor: number;
     age_days: number | null;
   };
   farm_steps: string[];
@@ -126,6 +135,7 @@ export interface RadarRow {
   category_median: number | null;
   momentum_factor: number;
   maturity_factor: number;
+  reach_factor: number;
   farm_steps: string[];
 }
 
@@ -293,6 +303,7 @@ export interface Score {
   peer: PeerMultiple;
   momentum_factor: number;
   maturity_factor: number;
+  reach_factor: number;
   age: number | null;
 }
 
@@ -305,8 +316,10 @@ export function scoreProtocol(p: SnapshotProtocol, asOf: string, peers: PeerTabl
   const age = ageDays(asOf, p.listed_at);
   const ageForModel = age ?? model.unknown_age_days;
   const maturity = model.maturity_base + (Math.min(Math.max(ageForModel, 0), model.maturity_days) / model.maturity_days) * model.maturity_span;
-  const implied = Math.max(1, Math.round(p.tvl_usd * peer.multiple * momentum * maturity));
-  return { implied, peer, momentum_factor: round4(momentum), maturity_factor: round4(maturity), age };
+  const extraChains = Math.min(Math.max(p.chains.length - 1, 0), model.reach_max_extra_chains);
+  const reach = 1 + model.reach_per_chain * extraChains;
+  const implied = Math.max(1, Math.round(p.tvl_usd * peer.multiple * momentum * maturity * reach));
+  return { implied, peer, momentum_factor: round4(momentum), maturity_factor: round4(maturity), reach_factor: round4(reach), age };
 }
 
 // ---------------------------------------------------------------------------
@@ -471,6 +484,7 @@ export function buildBoard(snapshot: Snapshot, model: ModelConstants = MODEL): B
       category_median: s.score.peer.category_median,
       momentum_factor: s.score.momentum_factor,
       maturity_factor: s.score.maturity_factor,
+      reach_factor: s.score.reach_factor,
       age_days: s.score.age,
     },
     farm_steps: farmSteps(s.p, s.score.age),
@@ -514,6 +528,7 @@ export function radarRow(row: BoardRow): RadarRow {
     category_median: row.model.category_median,
     momentum_factor: row.model.momentum_factor,
     maturity_factor: row.model.maturity_factor,
+    reach_factor: row.model.reach_factor,
     farm_steps: row.farm_steps,
   };
 }
