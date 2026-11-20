@@ -3,12 +3,106 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Token Radar: pre-token protocols ranked by implied value</title>
+<title>Launch Radar — pre-token protocols ranked by implied value</title>
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
-<a class="skip" href="#board">Skip to the board</a>
-<main id="board" tabindex="-1" aria-busy="true"></main>
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div>
+      <h1>Launch Radar</h1>
+      <p class="tagline">Protocols with no token yet, ranked by what a launch could be worth — and how to farm each one.</p>
+    </div>
+  </div>
+  <p class="snapshot-note" id="snapshot-note"></p>
+</header>
+
+<nav class="viewtabs" aria-label="Views">
+  <button id="tab-board" class="tab is-active" type="button">Ranked board</button>
+  <button id="tab-live" class="tab" type="button">Already trading</button>
+  <button id="tab-model" class="tab" type="button">The model</button>
+</nav>
+
+<main>
+  <section id="view-board">
+    <div class="stats" id="stats"></div>
+    <div class="controls" role="search">
+      <label class="ctl ctl-grow">Search
+        <input id="f-search" type="search" placeholder="Protocol name or slug" autocomplete="off">
+      </label>
+      <label class="ctl">Category
+        <select id="f-category"></select>
+      </label>
+      <label class="ctl">Chain
+        <select id="f-chain"></select>
+      </label>
+      <label class="ctl">Sort by
+        <select id="f-sort">
+          <option value="implied">Implied value</option>
+          <option value="tvl">TVL</option>
+          <option value="change">7d change</option>
+          <option value="age">Age without a token</option>
+          <option value="name">Name</option>
+        </select>
+      </label>
+      <label class="ctl ctl-check">
+        <input id="f-watch" type="checkbox"> Watchlist only
+      </label>
+      <span class="count" id="count" role="status"></span>
+    </div>
+    <div class="table-wrap">
+      <table class="board">
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th>Protocol</th>
+            <th>Category</th>
+            <th>Chains</th>
+            <th class="num">TVL</th>
+            <th class="num">7d</th>
+            <th class="num">Age</th>
+            <th class="num">Implied value</th>
+          </tr>
+        </thead>
+        <tbody id="board-body"></tbody>
+      </table>
+    </div>
+    <p class="hint">Select any protocol for its detail view: the model's factor breakdown and its full farm plan.</p>
+  </section>
+
+  <section id="view-live" hidden>
+    <p class="view-note" id="live-note"></p>
+    <div class="table-wrap">
+      <table class="board">
+        <thead>
+          <tr>
+            <th>Protocol</th>
+            <th>Symbol</th>
+            <th>Category</th>
+            <th class="num">TVL</th>
+            <th class="num">Market cap</th>
+            <th class="num">7d</th>
+          </tr>
+        </thead>
+        <tbody id="live-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="view-model" hidden>
+    <div id="model-body" class="model-body"></div>
+  </section>
+
+  <section id="view-detail" hidden>
+    <div id="detail-body"></div>
+  </section>
+</main>
+
+<footer class="foot">
+  <p id="foot-note"></p>
+</footer>
+
 <script src="../data.js"></script>
 <script src="app.js"></script>
 </body>
